@@ -3,6 +3,9 @@
 namespace Kiener\MolliePayments\Controller\Storefront\Payment;
 
 use Exception;
+use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\FlowBuilderDispatcherAdapterInterface;
+use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\FlowBuilderEventFactory;
+use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\FlowBuilderFactoryInterface;
 use Kiener\MolliePayments\Compatibility\Gateway\CompatibilityGatewayInterface;
 use Kiener\MolliePayments\Event\PaymentPageFailEvent;
 use Kiener\MolliePayments\Exception\CouldNotFetchTransactionException;
@@ -16,6 +19,8 @@ use Kiener\MolliePayments\Service\Transition\TransactionTransitionServiceInterfa
 use Kiener\MolliePayments\Struct\Order\OrderAttributes;
 use Mollie\Api\Exceptions\ApiException;
 use Mollie\Api\Resources\Order;
+use Mollie\Api\Resources\Payment;
+use Mollie\Api\Types\PaymentStatus;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Cart\Exception\OrderNotFoundException;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
@@ -78,6 +83,17 @@ class MollieFailureController extends StorefrontController
 
 
     /**
+     * @var FlowBuilderEventFactory
+     */
+    private $flowBuilderEventFactory;
+
+    /**
+     * @var FlowBuilderDispatcherAdapterInterface
+     */
+    private $flowBuilderDispatcher;
+
+
+    /**
      * @param RouterInterface $router
      * @param CompatibilityGatewayInterface $compatibilityGateway
      * @param MollieApiFactory $apiFactory
@@ -86,8 +102,20 @@ class MollieFailureController extends StorefrontController
      * @param TransactionService $transactionService
      * @param LoggerInterface $logger
      * @param TransactionTransitionServiceInterface $transactionTransitionService
+     * @param FlowBuilderFactoryInterface $flowBuilderFactory
+     * @param FlowBuilderEventFactory $flowBuilderEventFactory
      */
-    public function __construct(RouterInterface $router, CompatibilityGatewayInterface $compatibilityGateway, MollieApiFactory $apiFactory, BusinessEventDispatcher $eventDispatcher, OrderStateService $orderStateService, TransactionService $transactionService, LoggerInterface $logger, TransactionTransitionServiceInterface $transactionTransitionService)
+    public function __construct(
+        RouterInterface                       $router,
+        CompatibilityGatewayInterface         $compatibilityGateway,
+        MollieApiFactory                      $apiFactory,
+        BusinessEventDispatcher               $eventDispatcher,
+        OrderStateService                     $orderStateService,
+        TransactionService                    $transactionService,
+        LoggerInterface                       $logger,
+        TransactionTransitionServiceInterface $transactionTransitionService,
+        FlowBuilderFactoryInterface           $flowBuilderFactory,
+        FlowBuilderEventFactory               $flowBuilderEventFactory)
     {
         $this->router = $router;
         $this->compatibilityGateway = $compatibilityGateway;
@@ -97,6 +125,9 @@ class MollieFailureController extends StorefrontController
         $this->transactionService = $transactionService;
         $this->logger = $logger;
         $this->transactionTransitionService = $transactionTransitionService;
+
+        $this->flowBuilderEventFactory = $flowBuilderEventFactory;
+        $this->flowBuilderDispatcher = $flowBuilderFactory->createDispatcher();
     }
 
     /**
@@ -105,9 +136,9 @@ class MollieFailureController extends StorefrontController
      * @param SalesChannelContext $salesChannelContext
      * @param string $transactionId
      *
-     * @throws ApiException
      * @return null|Response
      * @return RedirectResponse|Response
+     * @throws ApiException
      */
     public function paymentFailedAction(SalesChannelContext $salesChannelContext, string $transactionId): ?Response
     {
@@ -162,6 +193,24 @@ class MollieFailureController extends StorefrontController
             throw new MollieOrderCouldNotBeFetchedException($mollieOrderId, [], $e);
         }
 
+        $mostRecentPayment = null;
+        if (!empty($mollieOrder->payments())) {
+            /** @var Payment $mostRecentPayment */
+            $mostRecentPayment = $mollieOrder->payments()[0];
+        }
+
+        $context = $salesChannelContext->getContext();
+        switch ($mostRecentPayment->status) {
+            case PaymentStatus::STATUS_FAILED:
+                $event = $this->flowBuilderEventFactory->buildPaymentFailedEvent($order, $context);
+                $this->flowBuilderDispatcher->dispatch($event);
+                break;
+            case PaymentStatus::STATUS_CANCELED :
+                $event = $this->flowBuilderEventFactory->buildPaymentCancelledEvent($order, $context);
+                $this->flowBuilderDispatcher->dispatch($event);
+                break;
+        }
+
         return $this->returnFailedRedirect(
             $salesChannelContext,
             (string)$mollieOrder->getCheckoutUrl(),
@@ -177,8 +226,8 @@ class MollieFailureController extends StorefrontController
      *
      * @param SalesChannelContext $context
      * @param string $transactionId
-     * @throws Exception
      * @return RedirectResponse
+     * @throws Exception
      */
     public function retry(SalesChannelContext $context, string $transactionId): RedirectResponse
     {

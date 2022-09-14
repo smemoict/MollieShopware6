@@ -2,7 +2,9 @@
 
 namespace Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder;
 
+use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Cancelled\PaymentCancelledEvent;
 use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\DummyEvent;
+use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Failure\PaymentFailedEvent;
 use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Refund\RefundStartedEvent;
 use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Subscription\SubscriptionCancelledEvent;
 use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Subscription\SubscriptionEndedEvent;
@@ -288,5 +290,34 @@ class FlowBuilderEventFactory
         }
 
         return new SubscriptionRenewedEvent($subscription, $customer, $context);
+    }
+
+    /**
+     * @param OrderEntity $orderEntity
+     * @param Context $context
+     * @return DummyEvent|PaymentFailedEvent
+     */
+    public function buildPaymentFailedEvent(OrderEntity $orderEntity, Context $context)
+    {
+        if ($this->versionCompare->lt(FlowBuilderFactory::FLOW_BUILDER_MIN_VERSION)) {
+            return new DummyEvent();
+        }
+
+        return new PaymentFailedEvent($orderEntity, $context);
+    }
+
+
+    /**
+     * @param OrderEntity $orderEntity
+     * @param Context $context
+     * @return DummyEvent|PaymentCancelledEvent
+     */
+    public function buildPaymentCancelledEvent(OrderEntity $orderEntity, Context $context)
+    {
+        if ($this->versionCompare->lt(FlowBuilderFactory::FLOW_BUILDER_MIN_VERSION)) {
+            return new DummyEvent();
+        }
+
+        return new PaymentCancelledEvent($orderEntity, $context);
     }
 }

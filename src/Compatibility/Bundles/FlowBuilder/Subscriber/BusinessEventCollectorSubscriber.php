@@ -2,6 +2,9 @@
 
 namespace Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Subscriber;
 
+
+use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Cancelled\PaymentCancelledEvent;
+use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Failure\PaymentFailedEvent;
 use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Refund\RefundStartedEvent;
 use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Subscription\SubscriptionCancelledEvent;
 use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Subscription\SubscriptionEndedEvent;
@@ -81,6 +84,9 @@ class BusinessEventCollectorSubscriber implements EventSubscriberInterface
             SubscriptionCancelledEvent::class,
             SubscriptionRemindedEvent::class,
             SubscriptionRenewedEvent::class,
+            # --------------------------------------------
+            PaymentCancelledEvent::class,
+            PaymentFailedEvent::class,
         ];
 
         foreach ($events as $event) {
