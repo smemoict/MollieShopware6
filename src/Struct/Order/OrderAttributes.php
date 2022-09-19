@@ -2,6 +2,7 @@
 
 namespace Kiener\MolliePayments\Struct\Order;
 
+use DateTimeZone;
 use Kiener\MolliePayments\Struct\OrderLineItemEntity\OrderLineItemEntityAttributes;
 use Shopware\Core\Checkout\Order\Aggregate\OrderLineItem\OrderLineItemCollection;
 use Shopware\Core\Checkout\Order\OrderEntity;
@@ -79,6 +80,11 @@ class OrderAttributes
      */
     private $creditCardFeeRegion;
 
+    /**
+     * @var string
+     */
+    private $timezone;
+
 
     /**
      * @var OrderEntity
@@ -106,6 +112,7 @@ class OrderAttributes
         $this->creditCardCountryCode = $this->getCustomFieldValue($order, 'creditCardCountryCode');
         $this->creditCardSecurity = $this->getCustomFieldValue($order, 'creditCardSecurity');
         $this->creditCardFeeRegion = $this->getCustomFieldValue($order, 'creditCardFeeRegion');
+        $this->timezone = $this->getCustomFieldValue($order, 'timezone');
     }
 
     /**
@@ -339,6 +346,22 @@ class OrderAttributes
         }
     }
 
+    /**
+     * @param DateTimeZone $timezone
+     * @return void
+     */
+    public function setTimezone(DateTimeZone $timezone)
+    {
+        $this->timezone = $timezone->getName();
+    }
+
+    /**
+     * @return DateTimeZone
+     */
+    public function getTimezone():DateTimeZone
+    {
+        return new DateTimeZone($this->timezone);
+    }
 
     /**
      * @return array<string,mixed>
@@ -403,6 +426,10 @@ class OrderAttributes
 
         if ((string)$this->creditCardFeeRegion !== '') {
             $mollieData['creditCardFeeRegion'] = $this->creditCardFeeRegion;
+        }
+
+        if ((string)$this->timezone !== '') {
+            $mollieData['timezone'] = $this->timezone;
         }
 
         return [

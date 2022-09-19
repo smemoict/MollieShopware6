@@ -34,6 +34,8 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\MultiFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
+use Twig\Environment;
+use Twig\Extension\CoreExtension;
 
 class NotificationFacade
 {
@@ -93,6 +95,11 @@ class NotificationFacade
      */
     private $settingsService;
 
+    /**
+     * @var Environment
+     */
+    private $twigEnvironment;
+
 
     /**
      * @param MollieGatewayInterface $gatewayMollie
@@ -107,7 +114,7 @@ class NotificationFacade
      * @param LoggerInterface $logger
      * @throws \Exception
      */
-    public function __construct(MollieGatewayInterface $gatewayMollie, OrderStatusConverter $statusConverter, OrderStatusUpdater $statusUpdater, EntityRepositoryInterface $repoPaymentMethods, EntityRepositoryInterface $repoOrderTransactions, FlowBuilderFactory $flowBuilderFactory, FlowBuilderEventFactory $flowBuilderEventFactory, SettingsService $serviceService, SubscriptionManager $subscription, LoggerInterface $logger)
+    public function __construct(MollieGatewayInterface $gatewayMollie, OrderStatusConverter $statusConverter, OrderStatusUpdater $statusUpdater, EntityRepositoryInterface $repoPaymentMethods, EntityRepositoryInterface $repoOrderTransactions, FlowBuilderFactory $flowBuilderFactory, FlowBuilderEventFactory $flowBuilderEventFactory, SettingsService $serviceService, SubscriptionManager $subscription,Environment $twigEnvironment, LoggerInterface $logger)
     {
         $this->gatewayMollie = $gatewayMollie;
         $this->statusConverter = $statusConverter;
@@ -117,6 +124,7 @@ class NotificationFacade
         $this->flowBuilderEventFactory = $flowBuilderEventFactory;
         $this->subscriptionManager = $subscription;
         $this->settingsService = $serviceService;
+        $this->twigEnvironment = $twigEnvironment;
         $this->logger = $logger;
 
         $this->molliePaymentDetails = new MolliePaymentDetails();
@@ -185,6 +193,12 @@ class NotificationFacade
         $orderAttributes = new OrderAttributes($swOrder);
 
         $mollieOrderId = $orderAttributes->getMollieOrderId();
+
+        # Setting the twig environment timezone for correct usage withing templates
+
+        $timezone = $orderAttributes->getTimezone();
+
+        $this->setTwigEnvironmentTimezone($timezone);
 
 
         $this->gatewayMollie->switchClient($swOrder->getSalesChannelId());
@@ -293,6 +307,17 @@ class NotificationFacade
         $criteria->addSorting(new FieldSorting('createdAt'));
 
         return $this->repoOrderTransactions->search($criteria, $context);
+    }
+
+    private function setTwigEnvironmentTimezone(\DateTimeZone $timezone)
+    {
+        if (!\in_array($timezone, timezone_identifiers_list(), true)) {
+            $timezone = 'UTC';
+        }
+        
+        /** @var CoreExtension $coreExtension */
+        $coreExtension = $this->twigEnvironment->getExtension(CoreExtension::class);
+        $coreExtension->setTimezone($timezone);
     }
 
     /**
