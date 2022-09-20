@@ -347,20 +347,20 @@ class OrderAttributes
     }
 
     /**
-     * @param DateTimeZone $timezone
+     * @param string $timezone
      * @return void
      */
-    public function setTimezone(DateTimeZone $timezone)
+    public function setTimezone(string $timezone)
     {
-        $this->timezone = $timezone->getName();
+        $this->timezone = $timezone;
     }
 
     /**
-     * @return DateTimeZone
+     * @return string
      */
-    public function getTimezone():DateTimeZone
+    public function getTimezone():string
     {
-        return new DateTimeZone($this->timezone);
+        return $this->timezone;
     }
 
     /**

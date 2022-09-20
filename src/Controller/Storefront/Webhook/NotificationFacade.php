@@ -195,11 +195,8 @@ class NotificationFacade
         $mollieOrderId = $orderAttributes->getMollieOrderId();
 
         # Setting the twig environment timezone for correct usage withing templates
-
         $timezone = $orderAttributes->getTimezone();
-
         $this->setTwigEnvironmentTimezone($timezone);
-
 
         $this->gatewayMollie->switchClient($swOrder->getSalesChannelId());
 
@@ -309,12 +306,11 @@ class NotificationFacade
         return $this->repoOrderTransactions->search($criteria, $context);
     }
 
-    private function setTwigEnvironmentTimezone(\DateTimeZone $timezone)
+    private function setTwigEnvironmentTimezone(string $timezone)
     {
         if (!\in_array($timezone, timezone_identifiers_list(), true)) {
             $timezone = 'UTC';
         }
-        
         /** @var CoreExtension $coreExtension */
         $coreExtension = $this->twigEnvironment->getExtension(CoreExtension::class);
         $coreExtension->setTimezone($timezone);

@@ -149,9 +149,11 @@ class MolliePaymentDoPay
         $orderCustomFields = new OrderAttributes($order);
         $orderCustomFields->setTransactionReturnUrl($transactionStruct->getReturnUrl());
 
+        # Add the timezone to the order for use with the webhook later.
         /** @var CoreExtension $coreExtension */
         $coreExtension = $this->twigEnvironment->getExtension(CoreExtension::class);
-        $timezone = $coreExtension->getTimezone();
+        $timezone = $coreExtension->getTimezone()->getName();
+
         $orderCustomFields->setTimezone($timezone);
 
         # extract the main Mollie Order ID "ord_xyz" that
