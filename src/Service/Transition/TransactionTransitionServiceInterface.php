@@ -15,6 +15,8 @@ interface TransactionTransitionServiceInterface
 
     public function cancelTransaction(OrderTransactionEntity $transaction, Context $context): void;
 
+    public function pendTransaction(OrderTransactionEntity $transaction, Context $context): void;
+
     public function failTransaction(OrderTransactionEntity $transaction, Context $context): void;
 
     public function authorizeTransaction(OrderTransactionEntity $transaction, Context $context): void;

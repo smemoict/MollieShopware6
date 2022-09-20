@@ -121,6 +121,28 @@ class TransactionTransitionService implements TransactionTransitionServiceInterf
         $this->performTransition($entityId, $payActionName, $context);
     }
 
+    public function pendTransaction(OrderTransactionEntity $transaction, Context $context): void
+    {
+        if (!defined('Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStates::STATE_UNCONFIRMED')){
+            return;
+        }
+
+        $currentStatus = ($transaction->getStateMachineState() instanceof StateMachineStateEntity) ? $transaction->getStateMachineState()->getTechnicalName() : '';
+
+        if ($this->isFinalOrTargetStatus($currentStatus, [OrderTransactionStates::STATE_UNCONFIRMED])) {
+            return;
+        }
+
+        $entityId = $transaction->getId();
+        $availableTransitions = $this->getAvailableTransitions($entityId, $context);
+
+        if (!$this->transitionIsAllowed(StateMachineTransitionActions::ACTION_PROCESS_UNCONFIRMED, $availableTransitions)) {
+            $this->reOpenTransaction($transaction, $context);
+        }
+
+        $this->performTransition($entityId, StateMachineTransitionActions::ACTION_PROCESS_UNCONFIRMED, $context);
+    }
+
     public function cancelTransaction(OrderTransactionEntity $transaction, Context $context): void
     {
         $currentStatus = ($transaction->getStateMachineState() instanceof StateMachineStateEntity) ? $transaction->getStateMachineState()->getTechnicalName() : '';

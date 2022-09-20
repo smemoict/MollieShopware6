@@ -10,6 +10,7 @@
         <service id="Kiener\MolliePayments\Handler\PaymentHandler" class="Kiener\MolliePayments\Handler\PaymentHandler">
             <argument type="service" id="mollie_payments.logger"/>
             <argument type="service" id="service_container"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <tag name="shopware.payment.method.async"/>
         </service>
 

@@ -12,11 +12,13 @@ use Mollie\Api\Exceptions\ApiException;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
+use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
 use Shopware\Core\Checkout\Payment\Exception\AsyncPaymentFinalizeException;
 use Shopware\Core\Checkout\Payment\Exception\CustomerCanceledAsyncPaymentException;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -52,15 +54,22 @@ class PaymentHandler implements AsynchronousPaymentHandlerInterface
      */
     private $container;
 
+    /**
+     * @var OrderTransactionStateHandler
+     */
+    private $orderTransactionStateHandler;
+
 
     /**
      * @param LoggerInterface $logger
      * @param ContainerInterface $container
+     * @param OrderTransactionStateHandler $orderTransactionStateHandler
      */
-    public function __construct(LoggerInterface $logger, ContainerInterface $container)
+    public function __construct(LoggerInterface $logger, ContainerInterface $container,OrderTransactionStateHandler $orderTransactionStateHandler)
     {
         $this->logger = $logger;
         $this->container = $container;
+        $this->orderTransactionStateHandler = $orderTransactionStateHandler;
     }
 
 
@@ -106,6 +115,12 @@ class PaymentHandler implements AsynchronousPaymentHandlerInterface
             ]
         );
 
+        $transactionId = $transaction->getOrderTransaction()->getId();
+        if (\method_exists($this->orderTransactionStateHandler, 'processUnconfirmed')) {
+            $this->orderTransactionStateHandler->processUnconfirmed($transactionId, $salesChannelContext->getContext());
+        } else {
+            $this->orderTransactionStateHandler->process($transactionId, $salesChannelContext->getContext());
+        }
 
         try {
             $paymentData = $this->payFacade->startMolliePayment(
