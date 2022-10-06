@@ -32,6 +32,7 @@
             <argument type="service" id="Kiener\MolliePayments\Service\MollieApi\PriceCalculator"/>
             <argument type="service" id="Kiener\MolliePayments\Service\MollieApi\LineItemDataExtractor"/>
             <argument type="service" id="Kiener\MolliePayments\Compatibility\Gateway\CompatibilityGateway"/>
+            <argument type="service" id="mollie_payments.logger"/>
         </service>
 
         <service id="Kiener\MolliePayments\Service\MollieApi\Builder\MollieOrderAddressBuilder"/>

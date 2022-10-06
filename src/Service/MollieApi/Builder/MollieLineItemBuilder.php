@@ -11,6 +11,7 @@ use Kiener\MolliePayments\Struct\MollieLineItem;
 use Kiener\MolliePayments\Struct\MollieLineItemCollection;
 use Kiener\MolliePayments\Validator\IsOrderLineItemValid;
 use Mollie\Api\Types\OrderLineType;
+use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Cart\Price\Struct\CalculatedPrice;
 use Shopware\Core\Checkout\Order\Aggregate\OrderLineItem\OrderLineItemCollection;
@@ -42,17 +43,23 @@ class MollieLineItemBuilder
     private $compatibilityGateway;
 
     /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
      * @param IsOrderLineItemValid $orderLineItemValidator
      * @param PriceCalculator $priceCalculator
      * @param LineItemDataExtractor $lineItemDataExtractor
      * @param CompatibilityGatewayInterface $compatibilityGateway
      */
-    public function __construct(IsOrderLineItemValid $orderLineItemValidator, PriceCalculator $priceCalculator, LineItemDataExtractor $lineItemDataExtractor, CompatibilityGatewayInterface $compatibilityGateway)
+    public function __construct(IsOrderLineItemValid $orderLineItemValidator, PriceCalculator $priceCalculator, LineItemDataExtractor $lineItemDataExtractor, CompatibilityGatewayInterface $compatibilityGateway, LoggerInterface $logger)
     {
         $this->orderLineItemValidator = $orderLineItemValidator;
         $this->priceCalculator = $priceCalculator;
         $this->lineItemDataExtractor = $lineItemDataExtractor;
         $this->compatibilityGateway = $compatibilityGateway;
+        $this->logger = $logger;
     }
 
 
@@ -73,8 +80,20 @@ class MollieLineItemBuilder
 
         foreach ($lineItems as $item) {
             $this->orderLineItemValidator->validate($item);
-            $extraData = $this->lineItemDataExtractor->extractExtraData($item);
             $itemPrice = $item->getPrice();
+            $totalPrice = $item->getTotalPrice();
+
+            // This is a fix for compatibility with plugins that provide an incorrect price.
+            if ($totalPrice == 0) {
+                $itemPrice->assign(['unitPrice'=>0]);
+                $this->logger->warning('Setting item price to zero for compatibility with plugins that provide an incorrect price',
+                    [
+                        'lineItemId' => $item->getId(),
+                        'orderId' => $item->getOrderId()
+                    ]);
+            }
+
+            $extraData = $this->lineItemDataExtractor->extractExtraData($item);
 
             if (!$itemPrice instanceof CalculatedPrice) {
                 throw new MissingPriceLineItemException((string)$item->getProductId());
