@@ -8,6 +8,10 @@
 
         <!-- ============================================================================================== -->
 
+        <service id="Kiener\MolliePayments\Components\Subscription\DAL\Subscription\Tag\SubscriptionTagDefinition">
+            <tag name="shopware.entity.definition" entity="mollie_subscription"/>
+        </service>
+
         <service id="Kiener\MolliePayments\Components\Subscription\DAL\Subscription\SubscriptionDefinition">
             <tag name="shopware.entity.definition" entity="mollie_subscription"/>
         </service>
