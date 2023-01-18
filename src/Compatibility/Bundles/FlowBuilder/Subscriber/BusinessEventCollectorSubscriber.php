@@ -23,6 +23,7 @@ use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\WebhookStatus
 use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\WebhookStatusReceived\WebhookReceivedPendingEvent;
 use Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\WebhookStatusReceived\WebhookReceivedRefundedEvent;
 use Kiener\MolliePayments\Components\Subscription\BusinessEvent\RenewalReminderEvent;
+use Kiener\MolliePayments\Event\SubscriptionAware;
 use Shopware\Core\Framework\Event\BusinessEventCollector;
 use Shopware\Core\Framework\Event\BusinessEventCollectorEvent;
 use Shopware\Core\Framework\Event\BusinessEventDefinition;
@@ -51,7 +52,7 @@ class BusinessEventCollectorSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            BusinessEventCollectorEvent::NAME => ['onAddEvent', 1000],
+            BusinessEventCollectorEvent::NAME => [['onAddEvent', 1000],['addSubscriptionAware',1000]],
         ];
     }
 
@@ -93,6 +94,14 @@ class BusinessEventCollectorSubscriber implements EventSubscriberInterface
             /** @var BusinessEventDefinition $definition */
             $definition = $this->businessEventCollector->define($event);
             $collection->set($definition->getName(), $definition);
+        }
+    }
+
+    public function addSubscriptionAware(BusinessEventCollectorEvent $event):void
+    {
+        foreach ($event->getCollection()->getElements() as $definition) {
+            $className = \explode('\\', SubscriptionAware::class);
+            $definition->addAware(\lcfirst(\end($className)));
         }
     }
 }

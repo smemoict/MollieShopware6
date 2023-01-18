@@ -4,6 +4,7 @@ namespace Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Events\Subscri
 
 use Kiener\MolliePayments\Components\Subscription\DAL\Subscription\SubscriptionDefinition;
 use Kiener\MolliePayments\Components\Subscription\DAL\Subscription\SubscriptionEntity;
+use Kiener\MolliePayments\Event\SubscriptionAware;
 use Shopware\Core\Checkout\Customer\CustomerDefinition;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Framework\Context;
@@ -17,7 +18,7 @@ use Shopware\Core\Framework\Event\SalesChannelAware;
 use Shopware\Core\Framework\Struct\JsonSerializableTrait;
 use Symfony\Contracts\EventDispatcher\Event;
 
-class SubscriptionStartedEvent extends Event implements CustomerAware, MailAware, SalesChannelAware, BusinessEventInterface
+class SubscriptionStartedEvent extends Event implements SubscriptionAware, CustomerAware, MailAware, SalesChannelAware, BusinessEventInterface
 {
     use JsonSerializableTrait;
 
@@ -117,5 +118,13 @@ class SubscriptionStartedEvent extends Event implements CustomerAware, MailAware
     public function getSalesChannelId(): string
     {
         return $this->customer->getSalesChannelId();
+    }
+
+    /**
+     * @return string
+     */
+    public function getSubscriptionId(): string
+    {
+        return $this->subscription->getId();
     }
 }
