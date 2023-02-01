@@ -52,7 +52,7 @@ class BusinessEventCollectorSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            BusinessEventCollectorEvent::NAME => [['onAddEvent', 1000],['addSubscriptionAware',1000]],
+            BusinessEventCollectorEvent::NAME => [['onAddEvent', 1000]],
         ];
     }
 
@@ -94,14 +94,6 @@ class BusinessEventCollectorSubscriber implements EventSubscriberInterface
             /** @var BusinessEventDefinition $definition */
             $definition = $this->businessEventCollector->define($event);
             $collection->set($definition->getName(), $definition);
-        }
-    }
-
-    public function addSubscriptionAware(BusinessEventCollectorEvent $event):void
-    {
-        foreach ($event->getCollection()->getElements() as $definition) {
-            $className = \explode('\\', SubscriptionAware::class);
-            $definition->addAware(\lcfirst(\end($className)));
         }
     }
 }

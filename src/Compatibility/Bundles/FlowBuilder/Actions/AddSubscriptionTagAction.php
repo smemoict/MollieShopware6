@@ -27,7 +27,9 @@ class AddSubscriptionTagAction extends FlowAction implements DelayableAction
      */
     public static function getName(): string
     {
-        return 'action.mollie.add.subscription.tag';
+        //This is specifically named this way to be picked up by shopware tagging
+        //Do not change unless needed
+        return 'action.add.mollie.subscription.tag';
     }
 
     /**
@@ -108,6 +110,7 @@ class AddSubscriptionTagAction extends FlowAction implements DelayableAction
             return ['id' => $tagId];
         }, $tagIds);
 
+        //TODO: create tag on non exist?
         $this->tagRepository->update([
             [
                 'id' => $subscriptionId,

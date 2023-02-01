@@ -117,6 +117,16 @@
                                 </sw-text-field>
                             {% endblock %}
                         </sw-container>
+                        <sw-container>
+                            {% block sw_order_detail_card_tag_field %}
+                                <sw-entity-tag-select
+                                    v-model="subscription.tags"
+                                    :label="$tc('sw-customer.baseForm.labelTags')"
+                                    :placeholder="$tc('sw-customer.baseForm.placeholderTags')"
+                                    disabled="disabled"
+                                />
+                            {% endblock %}
+                        </sw-container>
                         <sw-container columns="1fr 1fr" gap="0px 30px">
                             {% block sw_order_detail_card_basic_link_shopware_customer %}
                                 <mollie-internal-link inline :routerLink="{ name: 'sw.customer.detail', params: { id: subscription.customerId }, query: { edit: false } }">
