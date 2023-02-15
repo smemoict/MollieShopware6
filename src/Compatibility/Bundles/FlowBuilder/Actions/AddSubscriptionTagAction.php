@@ -5,14 +5,12 @@ namespace Kiener\MolliePayments\Compatibility\Bundles\FlowBuilder\Actions;
 
 use Kiener\MolliePayments\Event\SubscriptionAware;
 use Shopware\Core\Content\Flow\Dispatching\Action\FlowAction;
-use Shopware\Core\Content\Flow\Dispatching\DelayableAction;
 use Shopware\Core\Content\Flow\Dispatching\StorableFlow;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\Event\FlowEvent;
-use Shopware\Core\Framework\Feature;
 
-class AddSubscriptionTagAction extends FlowAction implements DelayableAction
+class AddSubscriptionTagAction extends FlowAction
 {
 
     private EntityRepositoryInterface $tagRepository;
@@ -33,15 +31,10 @@ class AddSubscriptionTagAction extends FlowAction implements DelayableAction
     }
 
     /**
-     * @return mixed[]
-     * @deprecated tag:v6.5.0 - reason:remove-subscriber - Will be removed
+     * @return array
      */
     public static function getSubscribedEvents(): array
     {
-        if (Feature::isActive('v6.5.0.0')) {
-            return [];
-        }
-
         return [
             self::getName() => 'handle',
         ];
@@ -58,15 +51,9 @@ class AddSubscriptionTagAction extends FlowAction implements DelayableAction
     /**
      * @param FlowEvent $event
      * @return void
-     * @deprecated tag:v6.5.0 Will be removed
      */
     public function handle(FlowEvent $event): void
     {
-        Feature::triggerDeprecationOrThrow(
-            'v6.5.0.0',
-            Feature::deprecatedMethodMessage(__CLASS__, __METHOD__, 'v6.5.0.0')
-        );
-
         $baseEvent = $event->getEvent();
         if (!$baseEvent instanceof SubscriptionAware) {
             return;
