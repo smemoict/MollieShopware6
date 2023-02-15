@@ -1,39 +1,10 @@
 Shopware.Application.$container.resetProviders();
 
-// Shopware.Application.addServiceProviderMiddleware('flowBuilderService', (service, next) => {
-
-
-//     console.log('flowBuilderService service gets called');
-//     console.log(next);
-//     next();
-// });
 
 const MOLLIE_TAG_ACTION = 'action.add.mollie.subscription.tag';
 const {camelCase} = Shopware.Utils.string;
 
 Shopware.Application.addServiceProviderDecorator('flowBuilderService', (service) => {
-    
-    const originalGetAvailableEntities = service.getAvailableEntities;
-    /**
-     * Adds subscription entity as a taggable entity when valid
-     * @returns {*}
-     */
-    service.getAvailableEntities = function getAvailableEntities() {
-        const entities = originalGetAvailableEntities.apply(null, arguments);
-        console.log('getAvailableEntities',arguments);
-
-        //Check if action has subscription data?
-        const actions = arguments[2];
-
-        if (actions.includes('subscriptionAware')){
-            entities.push({
-                label: service.convertEntityName(camelCase('mollie_subscription')),
-                value: 'mollie_subscription',
-            })
-        }
-
-        return entities;
-    }
 
     const originalGetActionTitle = service.getActionTitle;
     /**
@@ -41,7 +12,7 @@ Shopware.Application.addServiceProviderDecorator('flowBuilderService', (service)
      * @returns {*}
      */
     service.getActionTitle = function getActionTitle() {
-        const actionTitleObject = originalGetActionTitle.apply(null, arguments);
+        const actionTitleObject = originalGetActionTitle.apply(service, arguments);
 
         if (actionTitleObject?.value === MOLLIE_TAG_ACTION && actionTitleObject?.label === undefined) {
             actionTitleObject.label = 'sw-flow.actions.addTag';
@@ -57,8 +28,8 @@ Shopware.Application.addServiceProviderDecorator('flowBuilderService', (service)
      * @returns {*}
      */
     service.mapActionType = function mapActionType() {
-        console.log('Injection mapping');
-        const mappedActionType = originalMapActionType.apply(null, arguments);
+
+        const mappedActionType = originalMapActionType.apply(service, arguments);
 
         const actionName = arguments[0];
 
@@ -75,7 +46,7 @@ Shopware.Application.addServiceProviderDecorator('flowBuilderService', (service)
      * @returns {string|string|*}
      */
     service.getActionModalName = function getActionModalName() {
-        const actionModalName = originalGetActionModalName.apply(null, arguments);
+        const actionModalName = originalGetActionModalName.apply(service, arguments);
 
         const actionName = arguments[0];
 
@@ -84,6 +55,56 @@ Shopware.Application.addServiceProviderDecorator('flowBuilderService', (service)
         }
 
         return actionModalName;
+    }
+
+    const originalGetAvailableEntities = service.getAvailableEntities;
+    /**
+     * Adds subscription entity as a taggable entity when valid
+     * @returns {*}
+     */
+    service.getAvailableEntities = function getAvailableEntities() {
+
+        const entities = originalGetAvailableEntities.apply(service, arguments);
+
+        //Check if action has subscription data?
+        const actions = arguments[2];
+
+        if (actions.includes('subscriptionAware')){
+            entities.push({
+                label: service.convertEntityName(camelCase('mollie_subscription')),
+                value: 'mollie_subscription',
+            })
+        }
+
+        return entities;
+    }
+
+
+    function getAvailableEntities(selectedAction, actions, allowedAware, entityProperties = []) {
+        const availableEntities = [];
+        const entities = getEntities(selectedAction, actions, allowedAware);
+
+        entities.forEach((entityName) => {
+            if (!EntityDefinition.has(snakeCase(entityName))) {
+                return;
+            }
+
+            const properties = EntityDefinition.get(snakeCase(entityName)).properties;
+
+            // Check if the entity has the needed properties
+            const hasProperties = entityProperties.every(entityProperty => properties.hasOwnProperty(entityProperty));
+
+            if (!hasProperties) {
+                return;
+            }
+
+            availableEntities.push({
+                label: convertEntityName(camelCase(entityName)),
+                value: entityName,
+            });
+        });
+
+        return availableEntities;
     }
 
     return service;
