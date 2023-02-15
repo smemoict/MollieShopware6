@@ -6,7 +6,6 @@ import './component/flow-sequence/action-order-refund-modal';
 import './component/credit-card-logo'
 import './module/mollie-payments';
 import './module/sw-product';
-import './services/tag.service'
 
 
 import deDE from './snippet/de-DE';
