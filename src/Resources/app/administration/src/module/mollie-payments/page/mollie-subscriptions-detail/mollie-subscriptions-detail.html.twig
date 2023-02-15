@@ -7,6 +7,15 @@
 
         {% block sw_order_detail_actions %}
             <template #smart-bar-actions>
+                {% block sw_order_detail_actions_save %}
+                    <sw-button
+                               variant="primary"
+                               :disabled="!hasChanges" :square="false" :block="false" :isLoading="false"
+                               class="mollie-subscriptions-detail-link-button"
+                               @click="btnSave_Click()">
+                        {{ $tc('mollie-payments.subscriptions.detail.buttonSaveSubscription') }}
+                    </sw-button>
+                {% endblock %}
                 {% block sw_order_detail_actions_cancel %}
                     <sw-button v-if="!isLoading && isAclCancelAllowed && isCancellationAllowed"
                                variant="danger"
@@ -123,8 +132,8 @@
                                     v-model="subscription.tags"
                                     :label="$tc('sw-customer.baseForm.labelTags')"
                                     :placeholder="$tc('sw-customer.baseForm.placeholderTags')"
-                                    disabled="disabled"
-                                />
+                                    @change="tagChanged"
+                                ></sw-entity-tag-select>
                             {% endblock %}
                         </sw-container>
                         <sw-container columns="1fr 1fr" gap="0px 30px">

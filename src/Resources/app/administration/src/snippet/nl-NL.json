@@ -344,6 +344,7 @@
       "detail": {
         "title": "Mollie Abonnement",
         "buttonCancelSubscription": "Abonnement opzeggen",
+        "buttonSaveSubscription": "Wijzigingen opslaan",
         "labelDescription": "Omschrijving",
         "labelAmount": "Bedrag",
         "labelQuantity": "Hoeveelheid",

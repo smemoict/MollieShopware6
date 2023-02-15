@@ -344,6 +344,7 @@
       "detail": {
         "title": "Mollie subscription",
         "buttonCancelSubscription": "Cancel subscription",
+        "buttonSaveSubscription": "Save changes",
         "labelDescription": "Description",
         "labelAmount": "Amount",
         "labelQuantity": "Quantity",

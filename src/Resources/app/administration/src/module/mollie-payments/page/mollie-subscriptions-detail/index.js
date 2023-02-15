@@ -28,6 +28,7 @@ Component.register('mollie-subscriptions-detail', {
             isLoading: true,
             allowPauseResume: false,
             allowSkip: false,
+            hasChanges: false,
             // ------------------------------------------------
             showConfirmCancel: false,
             showConfirmPause: false,
@@ -150,6 +151,7 @@ Component.register('mollie-subscriptions-detail', {
             criteria.addAssociation('addresses');
             criteria.addAssociation('historyEntries');
             criteria.addAssociation('customer');
+            criteria.addAssociation('tags');
 
             // eslint-disable-next-line no-undef
             this.repoSubscriptions.search(criteria, Shopware.Context.api).then((result) => {
@@ -225,9 +227,36 @@ Component.register('mollie-subscriptions-detail', {
             return shopwareObj.Utils.format.date(new Date(date));
         },
 
+        updateSubscription() {
+
+            this.isLoading = true;
+            this.repoSubscriptions
+                .save(this.subscription, Shopware.Context.api)
+                .then(() => {
+                    this.loadDetails();
+                })
+                .finally(()=>{
+                    this.isLoading = false;
+                });
+        },
+
         // ---------------------------------------------------------------------------------------------------------
         // <editor-fold desc="EVENTS">
         // ---------------------------------------------------------------------------------------------------------
+
+        /**
+         *
+         */
+        tagChanged() {
+            this.hasChanges = true;
+        },
+
+        /**
+         *
+         */
+        btnSave_Click() {
+            this.updateSubscription();
+        },
 
         /**
          *
